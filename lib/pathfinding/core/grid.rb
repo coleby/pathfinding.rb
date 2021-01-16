@@ -15,6 +15,8 @@ require 'pathfinding/core/diagonal_movement'
 class Grid
   include Enumerable
 
+  attr_reader :nodes
+
   #
   # Creates a grid from a matrix:
   # * 0 (or less) represents a walkable node
