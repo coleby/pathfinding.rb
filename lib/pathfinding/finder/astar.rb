@@ -19,32 +19,34 @@ class AStarFinder
   # * +diagonal_movement+: set diagonal movements (see the +DiagonalMovement+ module)
   #
   def initialize(
-    heuristic = Heuristic::method(:manhattan),
+    heuristic = Heuristic.method(:manhattan),
     diagonal_movement = DiagonalMovement::NEVER
   )
     @diagonal_movement = diagonal_movement
-    if diagonal_movement == DiagonalMovement::NEVER
-      @heuristic = heuristic
-    else
-      @heuristic = Heuristic::method(:octile)
-    end
+    @heuristic = if diagonal_movement == DiagonalMovement::NEVER
+                   heuristic
+                 else
+                   Heuristic.method(:octile)
+                 end
   end
 
   #
   # Finds and returns the path as a list of node objects.
   #
-  def find_path(start_node, end_node, grid)
+  def find_path(start_node, end_node, grid, allowed_jumps = nil)
     open_set = [start_node]
     came_from = {}
     g_score = {}
     f_score = {}
+    jumps = 0
     grid.each_node do |node|
       g_score[node] = Float::INFINITY
       f_score[node] = Float::INFINITY
     end
     g_score[start_node] = 0
     f_score[start_node] = @heuristic.call(
-      (start_node.x - end_node.x).abs, (start_node.y - end_node.y).abs)
+      (start_node.x - end_node.x).abs, (start_node.y - end_node.y).abs
+    )
 
     until open_set.empty?
       current = open_set[0]
@@ -52,9 +54,8 @@ class AStarFinder
         current = node if f_score[node] < f_score[current]
       end
 
-      if current == end_node
-        return reconstruct_path(came_from, current)
-      end
+      return reconstruct_path(came_from, current) if current == end_node
+      return reconstruct_path(came_from, current) if allowed_jumps && jumps >= allowed_jumps
 
       current = open_set.delete_at(open_set.index(current))
 
@@ -65,11 +66,12 @@ class AStarFinder
         came_from[neighbor] = current
         g_score[neighbor] = tentative_g_score
         f_score[neighbor] = g_score[neighbor] + @heuristic.call(
-          (neighbor.x - end_node.x).abs, (neighbor.y - end_node.y).abs)
-        unless open_set.include?(neighbor)
-          open_set << neighbor
-        end
+          (neighbor.x - end_node.x).abs, (neighbor.y - end_node.y).abs
+        )
+        open_set << neighbor unless open_set.include?(neighbor)
       end
+
+      jumps += 1
     end
   end
 
@@ -77,7 +79,7 @@ class AStarFinder
   # Returns the distance between two nodes.
   #
   def d(n1, n2)
-    (n1.x == n2.x || n1.y == n2.y) ? 1 : Math.sqrt(2)
+    n1.x == n2.x || n1.y == n2.y ? 1 : Math.sqrt(2)
   end
 
   #

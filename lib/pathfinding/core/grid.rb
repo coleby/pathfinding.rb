@@ -73,17 +73,17 @@ class Grid
       line += '|' if border
       @width.times do |x|
         current = node(x, y)
-        if current == start_node
-          line += start_chr
-        elsif current == end_node
-          line += end_chr
-        elsif path&.include?(current)
-          line += path_chr
-        elsif current.walkable
-          line += empty_chr
-        else
-          line += block_chr
-        end
+        line += if current == start_node
+                  start_chr
+                elsif current == end_node
+                  end_chr
+                elsif path&.include?(current)
+                  path_chr
+                elsif current.walkable
+                  empty_chr
+                else
+                  block_chr
+                end
       end
       line += '|' if border
       data << line
@@ -109,7 +109,7 @@ class Grid
   #
   # Get all neighbors of a node.
   #
-  def neighbors(node, diagonal_movement=DiagonalMovement::NEVER)
+  def neighbors(node, diagonal_movement = DiagonalMovement::NEVER)
     x = node.x
     y = node.y
     neighbors = []
